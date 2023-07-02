@@ -15,73 +15,35 @@ const escapeRegExp = value => {
 }
 
 // Filter Toolbar
-const CustomToolbar = props => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        p: theme => theme.spacing(2, 5, 4, 5)
-      }}
-    >
-      <Box
-        sx={{
-          gap: 2,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}
-      >
-        <GridToolbarColumnsButton />
-        <GridToolbarDensitySelector />
-        <GridToolbarExport />
-        <CustomTextField select defaultValue=''>
-          <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
-            10
-          </MenuItem>
-          <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
-            25
-          </MenuItem>
-          <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
-            50
-          </MenuItem>
-          <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
-            100
-          </MenuItem>
-        </CustomTextField>
-      </Box>
-      <Box>
-        <CustomTextField
-          value={props.value}
-          placeholder='Search…'
-          onChange={props.onChange}
-          InputProps={{
-            startAdornment: (
-              <Box sx={{ mr: 2, display: 'flex' }}>
-                <Icon fontSize='1.25rem' icon='tabler:search' />
-              </Box>
-            ),
-            endAdornment: (
-              <IconButton size='small' title='Clear' aria-label='Clear' onClick={props.clearSearch}>
-                <Icon fontSize='1.25rem' icon='tabler:x' />
-              </IconButton>
-            )
-          }}
-          sx={{
-            width: {
-              xs: 1,
-              sm: 'auto'
-            },
-            '& .MuiInputBase-root > svg': {
-              mr: 2
-            }
-          }}
-        />
-      </Box>
-    </Box>
-  )
-}
+
+const columns = [
+  {
+    field: 'id',
+    headerName: 'ID',
+    filterable: false
+  },
+  {
+    flex: 0.09,
+    field: 'name',
+    minWidth: 290,
+    headerName: 'Name',
+    renderCell: params => <Typography variant='body2'>{params.row.name}</Typography>
+  },
+  {
+    flex: 0.09,
+    field: 'city',
+    minWidth: 290,
+    headerName: 'City',
+    renderCell: params => <Typography variant='body2'>{params.row.city}</Typography>
+  },
+  {
+    flex: 0.09,
+    field: 'email',
+    minWidth: 290,
+    headerName: 'Email',
+    renderCell: params => <Typography variant='body2'>{params.row.email}</Typography>
+  }
+]
 
 const Debugging = () => {
   const [page, setPage] = useState(0) // Current page number
@@ -90,10 +52,6 @@ const Debugging = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [pageSize, setPageSize] = useState(initialPageSize) // Rows per page
   const [filteredData, setFilteredData] = useState([])
-
-  useEffect(() => {
-    fetchRows()
-  }, [page, pageSize, searchQuery])
 
   const fetchRows = async () => {
     const offset = page * pageSize
@@ -119,7 +77,6 @@ const Debugging = () => {
 
     const filteredRows = rows.filter(row => {
       return Object.keys(row).some(field => {
-        // @ts-ignore
         return searchRegex.test(row[field].toString())
       })
     })
@@ -128,6 +85,75 @@ const Debugging = () => {
     } else {
       setFilteredData([])
     }
+  }
+
+  const CustomToolbar = props => {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          p: theme => theme.spacing(2, 5, 4, 5)
+        }}
+      >
+        <Box
+          sx={{
+            gap: 2,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}
+        >
+          <GridToolbarColumnsButton />
+          <GridToolbarDensitySelector />
+          <GridToolbarExport />
+          <CustomTextField select defaultValue=''>
+            <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
+              10
+            </MenuItem>
+            <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
+              25
+            </MenuItem>
+            <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
+              50
+            </MenuItem>
+            <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
+              100
+            </MenuItem>
+          </CustomTextField>
+        </Box>
+        <Box>
+          <CustomTextField
+            autoFocus
+            placeholder='Search…'
+            value={props.value}
+            onChange={props.onChange}
+            InputProps={{
+              startAdornment: (
+                <Box sx={{ mr: 2, display: 'flex' }}>
+                  <Icon fontSize='1.25rem' icon='tabler:search' />
+                </Box>
+              ),
+              endAdornment: (
+                <IconButton size='small' title='Clear' aria-label='Clear' onClick={props.clearSearch}>
+                  <Icon fontSize='1.25rem' icon='tabler:x' />
+                </IconButton>
+              )
+            }}
+            sx={{
+              width: {
+                xs: 1,
+                sm: 'auto'
+              },
+              '& .MuiInputBase-root > svg': {
+                mr: 2
+              }
+            }}
+          />
+        </Box>
+      </Box>
+    )
   }
 
   const handlePageSizeChange = newPageSize => {
@@ -148,34 +174,9 @@ const Debugging = () => {
     }
   }
 
-  const columns = [
-    {
-      field: 'id',
-      headerName: 'ID',
-      filterable: false
-    },
-    {
-      flex: 0.09,
-      field: 'name',
-      minWidth: 290,
-      headerName: 'Name',
-      renderCell: params => <Typography variant='body2'>{params.row.name}</Typography>
-    },
-    {
-      flex: 0.09,
-      field: 'city',
-      minWidth: 290,
-      headerName: 'City',
-      renderCell: params => <Typography variant='body2'>{params.row.city}</Typography>
-    },
-    {
-      flex: 0.09,
-      field: 'email',
-      minWidth: 290,
-      headerName: 'Email',
-      renderCell: params => <Typography variant='body2'>{params.row.email}</Typography>
-    }
-  ]
+  useEffect(() => {
+    fetchRows()
+  }, [page, pageSize, searchQuery])
 
   return (
     <Card>
@@ -186,7 +187,9 @@ const Debugging = () => {
           hideFooterPagination={true}
           columns={columns}
           rows={rows}
-          slots={{ toolbar: CustomToolbar }}
+          slots={{
+            toolbar: CustomToolbar
+          }}
           slotProps={{
             baseButton: {
               size: 'medium',
