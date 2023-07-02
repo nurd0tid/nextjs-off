@@ -15,6 +15,59 @@ const escapeRegExp = value => {
 }
 
 // Filter Toolbar
+const CustomToolbar = props => {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        p: theme => theme.spacing(2, 5, 4, 5)
+      }}
+    >
+      <Box
+        sx={{
+          gap: 2,
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}
+      >
+        <GridToolbarColumnsButton />
+        <GridToolbarDensitySelector />
+        <GridToolbarExport />
+      </Box>
+      <Box>
+        <CustomTextField
+          placeholder='Search…'
+          value={props.value}
+          onChange={props.onChange}
+          InputProps={{
+            startAdornment: (
+              <Box sx={{ mr: 2, display: 'flex' }}>
+                <Icon fontSize='1.25rem' icon='tabler:search' />
+              </Box>
+            ),
+            endAdornment: (
+              <IconButton size='small' title='Clear' aria-label='Clear' onClick={props.clearSearch}>
+                <Icon fontSize='1.25rem' icon='tabler:x' />
+              </IconButton>
+            )
+          }}
+          sx={{
+            width: {
+              xs: 1,
+              sm: 'auto'
+            },
+            '& .MuiInputBase-root > svg': {
+              mr: 2
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  )
+}
 
 const columns = [
   {
@@ -87,75 +140,6 @@ const Debugging = () => {
     }
   }
 
-  const CustomToolbar = props => {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          p: theme => theme.spacing(2, 5, 4, 5)
-        }}
-      >
-        <Box
-          sx={{
-            gap: 2,
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center'
-          }}
-        >
-          <GridToolbarColumnsButton />
-          <GridToolbarDensitySelector />
-          <GridToolbarExport />
-          <CustomTextField select defaultValue=''>
-            <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
-              10
-            </MenuItem>
-            <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
-              25
-            </MenuItem>
-            <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
-              50
-            </MenuItem>
-            <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
-              100
-            </MenuItem>
-          </CustomTextField>
-        </Box>
-        <Box>
-          <CustomTextField
-            autoFocus
-            placeholder='Search…'
-            value={props.value}
-            onChange={props.onChange}
-            InputProps={{
-              startAdornment: (
-                <Box sx={{ mr: 2, display: 'flex' }}>
-                  <Icon fontSize='1.25rem' icon='tabler:search' />
-                </Box>
-              ),
-              endAdornment: (
-                <IconButton size='small' title='Clear' aria-label='Clear' onClick={props.clearSearch}>
-                  <Icon fontSize='1.25rem' icon='tabler:x' />
-                </IconButton>
-              )
-            }}
-            sx={{
-              width: {
-                xs: 1,
-                sm: 'auto'
-              },
-              '& .MuiInputBase-root > svg': {
-                mr: 2
-              }
-            }}
-          />
-        </Box>
-      </Box>
-    )
-  }
-
   const handlePageSizeChange = newPageSize => {
     setPageSize(newPageSize)
     setPage(0)
@@ -203,12 +187,47 @@ const Debugging = () => {
           }}
         />
       </Box>
-      <Button onClick={handlePrevPage} disabled={page === 0}>
-        Previous
-      </Button>
-      <Button onClick={handleNextPage} disabled={page === Math.ceil(totalRows / pageSize) - 1}>
-        Next
-      </Button>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          p: theme => theme.spacing(2, 5, 4, 5)
+        }}
+      >
+        <Box
+          sx={{
+            gap: 2,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}
+        >
+          <Typography>Rows per page :</Typography>
+          <CustomTextField select defaultValue={10} label=''>
+            <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
+              10
+            </MenuItem>
+            <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
+              25
+            </MenuItem>
+            <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
+              50
+            </MenuItem>
+            <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
+              100
+            </MenuItem>
+          </CustomTextField>
+        </Box>
+        <Box>
+          <Button onClick={handlePrevPage} disabled={page === 0}>
+            Previous
+          </Button>
+          <Button onClick={handleNextPage} disabled={page === Math.ceil(totalRows / pageSize) - 1}>
+            Next
+          </Button>
+        </Box>
+      </Box>
     </Card>
   )
 }

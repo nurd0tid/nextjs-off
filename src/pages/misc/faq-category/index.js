@@ -54,24 +54,9 @@ const CustomToolbar = props => {
         <GridToolbarColumnsButton />
         <GridToolbarDensitySelector />
         <GridToolbarExport />
-        <CustomTextField select defaultValue=''>
-          <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
-            10
-          </MenuItem>
-          <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
-            25
-          </MenuItem>
-          <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
-            50
-          </MenuItem>
-          <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
-            100
-          </MenuItem>
-        </CustomTextField>
       </Box>
       <Box>
         <CustomTextField
-          autoFocus
           placeholder='Search…'
           value={props.value}
           onChange={props.onChange}
@@ -326,12 +311,47 @@ const FAQCategory = () => {
             }}
           />
         </Box>
-        <Button onClick={handlePrevPage} disabled={page === 0}>
-          Previous
-        </Button>
-        <Button onClick={handleNextPage} disabled={page === Math.ceil(totalRows / pageSize) - 1}>
-          Next
-        </Button>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            p: theme => theme.spacing(2, 5, 4, 5)
+          }}
+        >
+          <Box
+            sx={{
+              gap: 2,
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center'
+            }}
+          >
+            <Typography>Rows per page :</Typography>
+            <CustomTextField select defaultValue={10} label=''>
+              <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
+                10
+              </MenuItem>
+              <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
+                25
+              </MenuItem>
+              <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
+                50
+              </MenuItem>
+              <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
+                100
+              </MenuItem>
+            </CustomTextField>
+          </Box>
+          <Box>
+            <Button onClick={handlePrevPage} disabled={page === 0}>
+              Previous
+            </Button>
+            <Button onClick={handleNextPage} disabled={page === Math.ceil(totalRows / pageSize) - 1}>
+              Next
+            </Button>
+          </Box>
+        </Box>
       </Card>
       {/* Dialog Add */}
       <Dialog open={openAddDialog} onClose={handleAddClose}>
