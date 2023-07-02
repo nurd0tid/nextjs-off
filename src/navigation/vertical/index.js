@@ -19,19 +19,19 @@ const navigation = () => {
               title: 'FAQs Category',
               path: '/misc/faq-category'
             },
-            {
-              title: 'FAQs List',
-              path: '/misc/faq-list'
-            }
+            // {
+            //   title: 'FAQs List',
+            //   path: '/misc/faq-list'
+            // }
           ]
         }
       ]
     },
-    {
-      title: 'FAQs',
-      path: '/misc/faqs',
-      icon: 'tabler:info-circle'
-    },
+    // {
+    //   title: 'FAQs',
+    //   path: '/misc/faqs',
+    //   icon: 'tabler:info-circle'
+    // },
     {
       title: 'Debugging',
       path: '/misc/debugging',

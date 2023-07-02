@@ -7,7 +7,7 @@ import CustomTextField from 'src/@core/components/mui/text-field'
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 
-const pageSizeOptions = [10, 25, 50, 100] // Available rows per page options
+const pageSizeOptions = [5, 10, 25, 50, 100] // Available rows per page options
 const initialPageSize = pageSizeOptions[0] // Initial rows per page
 
 const escapeRegExp = value => {
@@ -165,8 +165,9 @@ const Debugging = () => {
   return (
     <Card>
       <CardHeader title='Debugging' />
-      <Box sx={{ height: 600 }}>
+      <Box sx={{ height: 525 }}>
         <DataGrid
+          density='comfortable'
           disableRowCount={true}
           hideFooterPagination={true}
           columns={columns}
@@ -204,7 +205,10 @@ const Debugging = () => {
           }}
         >
           <Typography>Rows per page :</Typography>
-          <CustomTextField select defaultValue={10} label=''>
+          <CustomTextField select defaultValue={5} label=''>
+            <MenuItem value={5} onClick={() => handlePageSizeChange(5)}>
+              5
+            </MenuItem>
             <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
               10
             </MenuItem>
