@@ -1,15 +1,20 @@
 // ** MUI Imports
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-import { DataGrid, GridToolbar, GridApi } from '@mui/x-data-grid'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContentText from '@mui/material/DialogContentText'
+import { DataGrid, GridToolbarColumnsButton, GridToolbarExport, GridToolbarDensitySelector } from '@mui/x-data-grid'
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  Card,
+  CardHeader,
+  Box,
+  MenuItem,
+  IconButton,
+  Typography
+} from '@mui/material'
 import CustomTextField from 'src/@core/components/mui/text-field'
-import Box from '@mui/material/Box'
 import toast from 'react-hot-toast'
 
 // ** Icon Imports
@@ -20,7 +25,82 @@ import CustomAvatar from 'src/@core/components/mui/avatar'
 
 import { useState, useEffect } from 'react'
 import supabase from '../../../../supabase'
-import { useRouter } from 'next/router'
+
+const pageSizeOptions = [10, 25, 50, 100] // Available rows per page options
+const initialPageSize = pageSizeOptions[0] // Initial rows per page
+
+const escapeRegExp = value => {
+  return value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+}
+
+const CustomToolbar = props => {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        p: theme => theme.spacing(2, 5, 4, 5)
+      }}
+    >
+      <Box
+        sx={{
+          gap: 2,
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}
+      >
+        <GridToolbarColumnsButton />
+        <GridToolbarDensitySelector />
+        <GridToolbarExport />
+        <CustomTextField select defaultValue=''>
+          <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
+            10
+          </MenuItem>
+          <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
+            25
+          </MenuItem>
+          <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
+            50
+          </MenuItem>
+          <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
+            100
+          </MenuItem>
+        </CustomTextField>
+      </Box>
+      <Box>
+        <CustomTextField
+          autoFocus
+          placeholder='Search…'
+          value={props.value}
+          onChange={props.onChange}
+          InputProps={{
+            startAdornment: (
+              <Box sx={{ mr: 2, display: 'flex' }}>
+                <Icon fontSize='1.25rem' icon='tabler:search' />
+              </Box>
+            ),
+            endAdornment: (
+              <IconButton size='small' title='Clear' aria-label='Clear' onClick={props.clearSearch}>
+                <Icon fontSize='1.25rem' icon='tabler:x' />
+              </IconButton>
+            )
+          }}
+          sx={{
+            width: {
+              xs: 1,
+              sm: 'auto'
+            },
+            '& .MuiInputBase-root > svg': {
+              mr: 2
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  )
+}
 
 const FAQCategory = () => {
   const [openAddDialog, setOpenAddDialog] = useState(false)
@@ -28,97 +108,66 @@ const FAQCategory = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [selectedRow, setSelectedRow] = useState(null)
   const [newRow, setNewRow] = useState({})
-
-  const columns = [
-    {
-      field: "id",
-      headerName: "ID",
-      filterable: false,
-      renderCell: (index) =>
-        index.api.getRowIndexRelativeToVisibleRows(index.row.id) + 1,
-    },
-    {
-      flex: 0.12,
-      minWidth: 10,
-      headerName: 'Icon',
-      renderCell: params => (
-        <CustomAvatar skin='light' variant='rounded'>
-          <Icon icon={params.row.icon} fontSize='2.25rem' />
-        </CustomAvatar>
-      )
-    },
-    { flex: 0.18, minWidth: 120, field: 'name', headerName: 'Name' },
-    { flex: 0.175, minWidth: 120, field: 'description', headerName: 'Description' },
-    {
-      field: '',
-      headerName: 'Actions',
-      width: 150,
-      renderCell: params => (
-        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-          <Button
-            variant='tonal'
-            color='primary'
-            aria-label='add'
-            size='small'
-            onClick={() => handleEdit(params.row)}
-            sx={{ mr: 3 }}
-          >
-            <Icon icon='tabler:edit' />
-          </Button>
-          <Button
-            variant='tonal'
-            color='error'
-            aria-label='add'
-            size='small'
-            onClick={() => handleDelete(params.row.id)}
-          >
-            <Icon icon='tabler:trash' />
-          </Button>
-        </Box>
-      )
-    }
-  ]
-
-  const pageSizeOptions = [7, 10, 25, 50, 100]
-
-  const [rows, setRows] = useState([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [pageSize, setPageSize] = useState(pageSizeOptions[0])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchText, setSearchText] = useState('')
+  const [page, setPage] = useState(0) // Current page number
+  const [totalRows, setTotalRows] = useState(0) // Total number of rows
+  const [rows, setRows] = useState([]) // Rows to be displayed
+  const [searchQuery, setSearchQuery] = useState('')
+  const [pageSize, setPageSize] = useState(initialPageSize) // Rows per page
+  const [filteredData, setFilteredData] = useState([])
 
   const fetchRows = async () => {
-    const { data, error, count } = await supabase
-      .from('faq_categories')
-      .select('*', { count: 'exact' })
-      .ilike('name', `%${searchText}%`)
-      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
+    const offset = page * pageSize
 
-    if (error) {
-      console.error(error)
-    } else {
+    try {
+      const { data, count } = await supabase
+        .from('faq_categories')
+        .select('*', { count: 'exact' })
+        .ilike('name', `%${searchQuery}%`)
+        .order('id', { ascending: true })
+        .range(offset, offset + pageSize - 1)
+
       setRows(data)
-      setTotalCount(count)
+      setTotalRows(count)
+    } catch (error) {
+      console.error('Error fetching data:', error)
     }
   }
 
-  useEffect(() => {
-    fetchRows()
-  }, [currentPage, pageSize, searchText])
-
-  const handlePageChange = params => {
-    setCurrentPage(params.page)
-    setPageSize(params.pageSize)
-    console.log(params)
-    console.log(params.pageSize)
+  const handlePageSizeChange = newPageSize => {
+    setPageSize(newPageSize)
+    setPage(0)
   }
 
-  const handleSearch = event => {
-    setSearchText(event.target.value)
+  const handlePrevPage = () => {
+    if (page > 0) {
+      setPage(prevPage => prevPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    const maxPage = Math.ceil(totalRows / pageSize) - 1
+    if (page < maxPage) {
+      setPage(prevPage => prevPage + 1)
+    }
+  }
+
+  const handleSearch = searchValue => {
+    setSearchQuery(searchValue)
+    const searchRegex = new RegExp(escapeRegExp(searchValue), 'i')
+
+    const filteredRows = rows.filter(row => {
+      return Object.keys(row).some(field => {
+        return searchRegex.test(row[field].toString())
+      })
+    })
+    if (searchValue.length) {
+      setFilteredData(filteredRows)
+    } else {
+      setFilteredData([])
+    }
   }
 
   // Function CRUD
-
   const handleAddOpen = () => {
     setOpenAddDialog(true)
   }
@@ -189,8 +238,59 @@ const FAQCategory = () => {
       toast.error('Failed to faqs categories')
     }
   }
-
   // End Function CRUD
+
+  const columns = [
+    {
+      field: 'id',
+      headerName: 'ID',
+      filterable: false
+    },
+    {
+      flex: 0.12,
+      minWidth: 10,
+      headerName: 'Icon',
+      renderCell: params => (
+        <CustomAvatar skin='light' variant='rounded'>
+          <Icon icon={params.row.icon} fontSize='2.25rem' />
+        </CustomAvatar>
+      )
+    },
+    { flex: 0.18, minWidth: 120, field: 'name', headerName: 'Name' },
+    { flex: 0.175, minWidth: 120, field: 'description', headerName: 'Description' },
+    {
+      field: '',
+      headerName: 'Actions',
+      width: 150,
+      renderCell: params => (
+        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+          <Button
+            variant='tonal'
+            color='primary'
+            aria-label='add'
+            size='small'
+            onClick={() => handleEdit(params.row)}
+            sx={{ mr: 3 }}
+          >
+            <Icon icon='tabler:edit' />
+          </Button>
+          <Button
+            variant='tonal'
+            color='error'
+            aria-label='add'
+            size='small'
+            onClick={() => handleDelete(params.row.id)}
+          >
+            <Icon icon='tabler:trash' />
+          </Button>
+        </Box>
+      )
+    }
+  ]
+
+  useEffect(() => {
+    fetchRows()
+  }, [page, pageSize, searchQuery])
   return (
     <>
       <Card>
@@ -204,20 +304,34 @@ const FAQCategory = () => {
             </div>
           }
         />
-        <DataGrid
-          autoHeight
-          columns={columns}
-          rows={rows}
-          pagination
-          pageSize={pageSize}
-          rowCount={totalCount}
-          onPageChange={handlePageChange}
-          pageSizeOptions={pageSizeOptions}
-          components={{
-            Toolbar: GridToolbar
-          }}
-          onSearchChange={handleSearch}
-        />
+        <Box sx={{ height: 600 }}>
+          <DataGrid
+            disableRowCount={true}
+            hideFooterPagination={true}
+            columns={columns}
+            rows={rows}
+            slots={{
+              toolbar: CustomToolbar
+            }}
+            slotProps={{
+              baseButton: {
+                size: 'medium',
+                variant: 'outlined'
+              },
+              toolbar: {
+                value: searchQuery,
+                clearSearch: () => handleSearch(''),
+                onChange: event => handleSearch(event.target.value)
+              }
+            }}
+          />
+        </Box>
+        <Button onClick={handlePrevPage} disabled={page === 0}>
+          Previous
+        </Button>
+        <Button onClick={handleNextPage} disabled={page === Math.ceil(totalRows / pageSize) - 1}>
+          Next
+        </Button>
       </Card>
       {/* Dialog Add */}
       <Dialog open={openAddDialog} onClose={handleAddClose}>
