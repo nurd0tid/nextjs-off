@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react'
+import supabase from '../../../../supabase'
+import toast from 'react-hot-toast'
 // ** MUI Imports
-import { DataGrid, GridToolbarColumnsButton, GridToolbarExport, GridToolbarDensitySelector } from '@mui/x-data-grid'
+import { DataGrid } from '@mui/x-data-grid'
 import {
   Button,
   Dialog,
@@ -11,80 +14,22 @@ import {
   CardHeader,
   Box,
   MenuItem,
-  IconButton,
   Typography
 } from '@mui/material'
-import CustomTextField from 'src/@core/components/mui/text-field'
-import toast from 'react-hot-toast'
 
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 
 // ** Custom Components Imports
+import CustomTextField from 'src/@core/components/mui/text-field'
+import CustomSearch from 'src/views/table/CustomSearch'
 import CustomAvatar from 'src/@core/components/mui/avatar'
-
-import { useState, useEffect } from 'react'
-import supabase from '../../../../supabase'
 
 const pageSizeOptions = [5, 10, 25, 50, 100] // Available rows per page options
 const initialPageSize = pageSizeOptions[0] // Initial rows per page
 
 const escapeRegExp = value => {
   return value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
-}
-
-const CustomToolbar = props => {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        p: theme => theme.spacing(2, 5, 4, 5)
-      }}
-    >
-      <Box
-        sx={{
-          gap: 2,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}
-      >
-        <GridToolbarColumnsButton />
-        <GridToolbarDensitySelector />
-        <GridToolbarExport />
-      </Box>
-      <Box>
-        <CustomTextField
-          placeholder='Search…'
-          value={props.value}
-          onChange={props.onChange}
-          InputProps={{
-            startAdornment: (
-              <Box sx={{ mr: 2, display: 'flex' }}>
-                <Icon fontSize='1.25rem' icon='tabler:search' />
-              </Box>
-            ),
-            endAdornment: (
-              <IconButton size='small' title='Clear' aria-label='Clear' onClick={props.clearSearch}>
-                <Icon fontSize='1.25rem' icon='tabler:x' />
-              </IconButton>
-            )
-          }}
-          sx={{
-            width: {
-              xs: 1,
-              sm: 'auto'
-            },
-            '& .MuiInputBase-root > svg': {
-              mr: 2
-            }
-          }}
-        />
-      </Box>
-    </Box>
-  )
 }
 
 const FAQCategory = () => {
@@ -297,7 +242,7 @@ const FAQCategory = () => {
             columns={columns}
             rows={rows}
             slots={{
-              toolbar: CustomToolbar
+              toolbar: CustomSearch
             }}
             slotProps={{
               baseButton: {
