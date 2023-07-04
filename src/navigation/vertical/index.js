@@ -18,7 +18,7 @@ const navigation = () => {
             {
               title: 'FAQs Category',
               path: '/misc/faq-category'
-            },
+            }
             // {
             //   title: 'FAQs List',
             //   path: '/misc/faq-list'
@@ -37,9 +37,19 @@ const navigation = () => {
       path: '/misc/debugging',
       icon: 'tabler:code'
     },
+    // {
+    //   title: 'Popup',
+    //   path: '/misc/popup',
+    //   icon: 'tabler:code'
+    // },
     {
-      title: 'Popup',
-      path: '/misc/popup',
+      title: 'Popup V1',
+      path: '/misc/popup-v1',
+      icon: 'tabler:code'
+    },
+    {
+      title: 'Popup V2',
+      path: '/misc/popup-v2',
       icon: 'tabler:code'
     }
     // {

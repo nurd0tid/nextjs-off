@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react'
+import supabase from '../../../../supabase'
 // ** MUI Imports
 import {
   CardContent,
@@ -11,15 +13,26 @@ import {
   Box,
   DialogContent,
   DialogActions,
-  Button
+  Button,
+  MenuItem
 } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 
-// ** Component
-import { useState, useEffect } from 'react'
-import supabase from '../../../../supabase'
+// ** Custom Component Import
+import CustomTextField from 'src/@core/components/mui/text-field'
+import CustomSearch from 'src/views/table/CustomSearch'
+
+const pageSizeOptions = [5, 10, 25, 50, 100] // Available rows per page options
+const initialPageSize = pageSizeOptions[0] // Initial rows per page
+
+const escapeRegExp = value => {
+  return value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+}
 
 const Popup = () => {
+  const [page, setPage] = useState(0) // Current page number
+  const [pageSize, setPageSize] = useState(initialPageSize) // Rows per page
+  const [totalRowsAddress, setTotalRowsAddress] = useState(0) // Total number of rows
   const [inputValue1, setInputValue1] = useState('')
   const [inputStateValue, setInputStateValue] = useState('')
   const [inputValue2, setInputValue2] = useState('')
@@ -28,6 +41,8 @@ const Popup = () => {
   const [gridData1, setGridData1] = useState([])
   const [gridData2, setGridData2] = useState([])
   const [selectedData, setSelectedData] = useState(null)
+  const [searchAddressQuery, setSearchAddressQuery] = useState('')
+  const [filteredData, setFilteredData] = useState([])
 
   const handleInputChange1 = event => {
     setInputValue1(event.target.value)
@@ -68,6 +83,22 @@ const Popup = () => {
     }
   }
 
+  const handleSearchAddress = searchValue => {
+    setSearchAddressQuery(searchValue)
+    const searchRegex = new RegExp(escapeRegExp(searchValue), 'i')
+
+    const filteredRows = rows.filter(row => {
+      return Object.keys(row).some(field => {
+        return searchRegex.test(row[field].toString())
+      })
+    })
+    if (searchValue.length) {
+      setFilteredData(filteredRows)
+    } else {
+      setFilteredData([])
+    }
+  }
+
   // FetchingAddress
   useEffect(() => {
     const fetchData1 = async () => {
@@ -97,6 +128,24 @@ const Popup = () => {
 
     fetchData2()
   }, [inputStateValue])
+
+  const handlePageSizeChange = newPageSize => {
+    setPageSize(newPageSize)
+    setPage(0)
+  }
+
+  const handlePrevPage = () => {
+    if (page > 0) {
+      setPage(prevPage => prevPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    const maxPage = Math.ceil(totalRowsAddress / pageSize) - 1
+    if (page < maxPage) {
+      setPage(prevPage => prevPage + 1)
+    }
+  }
 
   const handleRowClick = params => {
     setSelectedData(params.row)
@@ -133,25 +182,85 @@ const Popup = () => {
             <Dialog open={isDialogOpen1} onClose={closeDialog1} maxWidth='lg' fullWidth>
               <DialogTitle>Search Postcode with Address</DialogTitle>
               <DialogContent>
-                <DataGrid
-                  rows={gridData1}
-                  columns={[
-                    { flex: 0.06, minWidth: 80, field: 'full_address', headerName: 'Full Address' },
-                    { flex: 0.06, minWidth: 80, field: 'country', headerName: 'Country' },
-                    { flex: 0.06, minWidth: 80, field: 'state', headerName: 'State' }
-                  ]}
-                  disableRowCount={true}
-                  hideFooterPagination={true}
-                  autoHeight
-                  disableSelectionOnClick
-                  onRowClick={handleRowClick}
-                  rowSelection={{
-                    type: 'single',
-                    allowDeselect: false,
-                    checkboxSelection: false,
-                    selectedRowIds: selectedData ? [selectedData.id] : []
+                <Box sx={{ height: 525 }}>
+                  <DataGrid
+                    rows={gridData1}
+                    columns={[
+                      { flex: 0.06, minWidth: 80, field: 'full_address', headerName: 'Full Address' },
+                      { flex: 0.06, minWidth: 80, field: 'country', headerName: 'Country' },
+                      { flex: 0.06, minWidth: 80, field: 'state', headerName: 'State' }
+                    ]}
+                    density='comfortable'
+                    disableRowCount={true}
+                    hideFooterPagination={true}
+                    disableSelectionOnClick
+                    onRowClick={handleRowClick}
+                    rowSelection={{
+                      type: 'multiple',
+                      allowDeselect: false,
+                      checkboxSelection: true,
+                      selectedRowIds: selectedData ? [selectedData.id] : []
+                    }}
+                    slots={{
+                      toolbar: CustomSearch
+                    }}
+                    slotProps={{
+                      baseButton: {
+                        size: 'medium',
+                        variant: 'outlined'
+                      },
+                      toolbar: {
+                        value: searchAddressQuery,
+                        clearSearch: () => handleSearchAddress(''),
+                        onChange: event => handleSearchAddress(event.target.value)
+                      }
+                    }}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    p: theme => theme.spacing(2, 5, 4, 5)
                   }}
-                />
+                >
+                  <Box
+                    sx={{
+                      gap: 2,
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Typography>Rows per page :</Typography>
+                    <CustomTextField select defaultValue={5} label=''>
+                      <MenuItem value={5} onClick={() => handlePageSizeChange(5)}>
+                        5
+                      </MenuItem>
+                      <MenuItem value={10} onClick={() => handlePageSizeChange(10)}>
+                        10
+                      </MenuItem>
+                      <MenuItem value={25} onClick={() => handlePageSizeChange(25)}>
+                        25
+                      </MenuItem>
+                      <MenuItem value={50} onClick={() => handlePageSizeChange(50)}>
+                        50
+                      </MenuItem>
+                      <MenuItem value={100} onClick={() => handlePageSizeChange(100)}>
+                        100
+                      </MenuItem>
+                    </CustomTextField>
+                  </Box>
+                  <Box>
+                    <Button onClick={handlePrevPage} disabled={page === 0}>
+                      Previous
+                    </Button>
+                    <Button onClick={handleNextPage} disabled={page === Math.ceil(totalRowsAddress / pageSize) - 1}>
+                      Next
+                    </Button>
+                  </Box>
+                </Box>
               </DialogContent>
               <DialogActions>
                 <Button onClick={closeDialog1}>Cancel</Button>

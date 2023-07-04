@@ -28,10 +28,6 @@ import CustomAvatar from 'src/@core/components/mui/avatar'
 const pageSizeOptions = [5, 10, 25, 50, 100] // Available rows per page options
 const initialPageSize = pageSizeOptions[0] // Initial rows per page
 
-const escapeRegExp = value => {
-  return value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
-}
-
 const FAQCategory = () => {
   const [openAddDialog, setOpenAddDialog] = useState(false)
   const [openEditDialog, setOpenEditDialog] = useState(false)
@@ -49,15 +45,14 @@ const FAQCategory = () => {
     const offset = page * pageSize
 
     try {
-      const { data, count } = await supabase
-        .from('faq_categories')
-        .select('*', { count: 'exact' })
-        .ilike('name', `%${searchQuery}%`)
-        .order('id', { ascending: true })
-        .range(offset, offset + pageSize - 1)
+      const { data } = await supabase.rpc('get_faq_categories', {
+        p_offset: offset,
+        p_limit: pageSize,
+        p_search_text: searchQuery
+      })
 
-      setRows(data)
-      setTotalRows(count)
+      setRows(data[0].data)
+      setTotalRows(data[0].row_count)
     } catch (error) {
       console.error('Error fetching data:', error)
     }
@@ -83,18 +78,6 @@ const FAQCategory = () => {
 
   const handleSearch = searchValue => {
     setSearchQuery(searchValue)
-    const searchRegex = new RegExp(escapeRegExp(searchValue), 'i')
-
-    const filteredRows = rows.filter(row => {
-      return Object.keys(row).some(field => {
-        return searchRegex.test(row[field].toString())
-      })
-    })
-    if (searchValue.length) {
-      setFilteredData(filteredRows)
-    } else {
-      setFilteredData([])
-    }
   }
 
   // Function CRUD
@@ -179,6 +162,7 @@ const FAQCategory = () => {
     {
       flex: 0.12,
       minWidth: 10,
+      field: 'icon',
       headerName: 'Icon',
       renderCell: params => (
         <CustomAvatar skin='light' variant='rounded'>
@@ -240,7 +224,7 @@ const FAQCategory = () => {
             disableRowCount={true}
             hideFooterPagination={true}
             columns={columns}
-            rows={rows}
+            rows={rows ?? []}
             slots={{
               toolbar: CustomSearch
             }}

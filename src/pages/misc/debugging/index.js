@@ -10,10 +10,6 @@ import CustomSearch from 'src/views/table/CustomSearch'
 const pageSizeOptions = [5, 10, 25, 50, 100] // Available rows per page options
 const initialPageSize = pageSizeOptions[0] // Initial rows per page
 
-const escapeRegExp = value => {
-  return value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
-}
-
 const columns = [
   {
     field: 'id',
@@ -49,21 +45,19 @@ const Debugging = () => {
   const [rows, setRows] = useState([]) // Rows to be displayed
   const [searchQuery, setSearchQuery] = useState('')
   const [pageSize, setPageSize] = useState(initialPageSize) // Rows per page
-  const [filteredData, setFilteredData] = useState([])
 
   const fetchRows = async () => {
     const offset = page * pageSize
 
     try {
-      const { data, count } = await supabase
-        .from('debugs')
-        .select('*', { count: 'exact' })
-        .ilike('name', `%${searchQuery}%`)
-        .order('id', { ascending: true })
-        .range(offset, offset + pageSize - 1)
+      const { data } = await supabase.rpc('get_debugging', {
+        p_offset: offset,
+        p_limit: pageSize,
+        p_search_text: searchQuery
+      })
 
-      setRows(data)
-      setTotalRows(count)
+      setRows(data[0].data)
+      setTotalRows(data[0].row_count)
     } catch (error) {
       console.error('Error fetching data:', error)
     }
@@ -71,18 +65,6 @@ const Debugging = () => {
 
   const handleSearch = searchValue => {
     setSearchQuery(searchValue)
-    const searchRegex = new RegExp(escapeRegExp(searchValue), 'i')
-
-    const filteredRows = rows.filter(row => {
-      return Object.keys(row).some(field => {
-        return searchRegex.test(row[field].toString())
-      })
-    })
-    if (searchValue.length) {
-      setFilteredData(filteredRows)
-    } else {
-      setFilteredData([])
-    }
   }
 
   const handlePageSizeChange = newPageSize => {
@@ -116,7 +98,7 @@ const Debugging = () => {
           disableRowCount={true}
           hideFooterPagination={true}
           columns={columns}
-          rows={rows}
+          rows={rows ?? []}
           slots={{
             toolbar: CustomSearch
           }}
