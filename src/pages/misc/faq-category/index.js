@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import supabase from '../../../../supabase'
 import toast from 'react-hot-toast'
 // ** MUI Imports
-import { DataGrid } from '@mui/x-data-grid'
+import { DataGrid, gridColumnGroupsLookupSelector } from '@mui/x-data-grid'
 import {
   Button,
   Dialog,
@@ -94,7 +94,11 @@ const FAQCategory = () => {
   }
 
   const handleInsert = async () => {
-    const { data, error } = await supabase.from('faq_categories').insert(newRow)
+    const { data, error } = await supabase.rpc('create_faq_categories', {
+      new_icon: newRow.icon,
+      new_name: newRow.name,
+      new_description: newRow.description,
+    })
     if (!error) {
       setOpenAddDialog(false)
       setNewRow({})
@@ -124,14 +128,12 @@ const FAQCategory = () => {
   }
 
   const handleEditSubmit = async () => {
-    const { data, error } = await supabase
-      .from('faq_categories')
-      .update({
-        icon: selectedRow.icon,
-        name: selectedRow.name,
-        description: selectedRow.description
-      })
-      .match({ id: selectedRow.id })
+    const { data, error } = await supabase.rpc('update_faq_categories_by_id', {
+      by_id: selectedRow.id,
+      new_icon: selectedRow.icon,
+      new_name: selectedRow.name,
+      new_description: selectedRow.description
+    })
     if (!error) {
       toast.success('FAQs categories updated successfully')
       setOpenEditDialog(false)
@@ -142,7 +144,9 @@ const FAQCategory = () => {
   }
 
   const handleDeleteSubmit = async () => {
-    const { error } = await supabase.from('faq_categories').delete().match({ id: selectedRow })
+    const { error } = await supabase.rpc('delete_faq_categories_by_id', {
+      by_id: selectedRow
+    })
     if (!error) {
       toast.success('FAQs categories deleted successfully')
       setOpenDeleteDialog(false)
